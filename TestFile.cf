@@ -1,0 +1,14 @@
+variable =
+{
+    int_var = 1;
+    float_var = 0.20;
+    string_var = 'string var';
+    string_var2 = "string_var\"";
+    
+    array = [1, 2, 3, 4];
+    
+    another_variable =
+    {
+        int_val = 1;
+    }
+}

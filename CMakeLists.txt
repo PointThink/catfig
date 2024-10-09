@@ -5,8 +5,11 @@ project(catfig C)
 file(GLOB_RECURSE CATFIG_SOURCES "catfig/Source/*.c")
 file(GLOB_RECURSE CATFIG_HEADERS "catfig/Source/*.h")
 
-add_library(catfig STATIC ${CATFIG_SOURCES} ${CATFIG_HEADERS})
+add_library(catfig STATIC ${CATFIG_SOURCES} ${CATFIG_HEADERS}
+        catfig/Source/CatfigInternal.h)
 target_include_directories(catfig PUBLIC "catfig/Source")
+
+set(CMAKE_CXX_FLAGS "-Wall -pedantic")
 
 # test exec
 add_executable(catfig-test "test/Source/Main.c")
