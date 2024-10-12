@@ -49,6 +49,7 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 
 	bool parsingString = false;
 	bool parsingName = false;
+	bool parsingNumber = false;
 
 	uint32_t currentIndex = 0;
 
@@ -139,6 +140,34 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 			parsingName = false;
 			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_NAME, nameString, nameLength, nameBegin, nameBegin + nameLength));
 		}
+		else if (parsingNumber)
+		{
+			currentIndex--; // the loop increments the currentIndex after detecting the first char of a name so we have to decrement it
+			uint32_t numberBegin = currentIndex;
+			uint32_t numberLength = 0;
+
+			while (isdigit(string[currentIndex]) || string[currentIndex] == '.')
+			{
+				currentIndex++;
+				numberLength++;
+			}
+
+			char* numberString = malloc(numberLength + 1);
+			numberString[numberLength] = '\0';
+
+			uint32_t numberIndex = 0;
+			currentIndex = numberBegin;
+
+			while (numberIndex < numberLength)
+			{
+				numberString[numberIndex] = string[currentIndex];
+				numberIndex++;
+				currentIndex++;
+			}
+
+			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_VALUE_NUMBER, numberString, numberLength, numberBegin, numberBegin + numberLength));
+			parsingNumber = false;
+		}
 		else
 		{
 			if (string[currentIndex] == '{')
@@ -180,6 +209,8 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 				parsingString = true;
 			else if (isalpha(string[currentIndex]))
 				parsingName = true;
+			else if (isdigit(string[currentIndex]) || string[currentIndex] == '.')
+				parsingNumber = true;
 		}
 
 		currentIndex++;
