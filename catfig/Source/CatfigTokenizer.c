@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "Catfig.h"
 
 #include <stdio.h>
@@ -46,6 +48,7 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 	(*outTokenCount) = 0;
 
 	bool parsingString = false;
+	bool parsingName = false;
 
 	uint32_t currentIndex = 0;
 
@@ -53,7 +56,90 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 
 	while (currentIndex < stringLength)
 	{
-		if (!parsingString)
+		if (parsingString)
+		{
+			bool stringEscapeNextChar = false;
+			uint32_t parsedStringBegin = 0;
+			uint32_t parsedStringLength = 0;
+
+			parsedStringBegin = currentIndex;
+
+			// first count the number of chars in the string
+			while (true)
+			{
+				if (string[currentIndex] == '"' && !stringEscapeNextChar)
+					break;
+				if (string[currentIndex] == '\\'  && !stringEscapeNextChar)
+				{
+					currentIndex++;
+					stringEscapeNextChar = true;
+				}
+				else
+				{
+					parsedStringLength++;
+					currentIndex++;
+					stringEscapeNextChar = false;
+				}
+			}
+
+			char* parsedString = malloc(parsedStringLength + 1);
+
+			currentIndex = parsedStringBegin;
+			int stringIndex = 0;
+
+			// first count the number of chars in the string
+			while (true)
+			{
+				if (string[currentIndex] == '"' && !stringEscapeNextChar)
+					break;
+				if (string[currentIndex] == '\\'  && !stringEscapeNextChar)
+				{
+					currentIndex++;
+					stringEscapeNextChar = true;
+				}
+				else
+				{
+					parsedString[stringIndex] = string[currentIndex];
+					stringIndex++;
+					currentIndex++;
+					stringEscapeNextChar = false;
+				}
+			}
+
+			parsedString[stringIndex] = '\0';
+
+			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_VALUE_STRING, parsedString, strlen(parsedString), parsedStringBegin, currentIndex));
+			parsingString = false;
+		}
+		else if (parsingName)
+		{
+			currentIndex--; // the loop increments the currentIndex after detecting the first char of a name so we have to decrement it
+			uint32_t nameBegin = currentIndex;
+			uint32_t nameLength = 0;
+
+			while (isalnum(string[currentIndex]) || string[currentIndex] == '_')
+			{
+				currentIndex++;
+				nameLength++;
+			}
+
+			char* nameString = malloc(nameLength + 1);
+			nameString[nameLength] = '\0';
+
+			currentIndex = nameBegin;
+			uint32_t nameIndex = 0;
+
+			while (nameIndex < nameLength)
+			{
+				nameString[nameIndex] = string[currentIndex];
+				currentIndex++;
+				nameIndex++;
+			}
+
+			parsingName = false;
+			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_NAME, nameString, nameLength, nameBegin, nameBegin + nameLength));
+		}
+		else
 		{
 			if (string[currentIndex] == '{')
 			{
@@ -90,50 +176,10 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 				TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_EQUALS, "=", 1, currentIndex, currentIndex));
 				*outTokenCount += 1;
 			}
-			else if (string[currentIndex] == '"')
+			else if (string[currentIndex] == '"' || string[currentIndex] == '_')
 				parsingString = true;
-		}
-		else
-		{
-			bool stringEscapeNextChar = false;
-			uint32_t parsedStringBegin = 0;
-			uint32_t parsedStringLength = 0;
-
-			parsedStringBegin = currentIndex;
-
-			// first count the number of chars in the string
-			while (string[currentIndex] != '"')
-			{
-				if (string[currentIndex] == '\\')
-					stringEscapeNextChar = true;
-				else
-					parsedStringLength++;
-
-				currentIndex++;
-			}
-
-			char* parsedString = malloc(parsedStringBegin + parsedStringLength + 1);
-
-			currentIndex = parsedStringBegin;
-			int stringIndex = 0;
-
-			while (string[currentIndex] != '"')
-			{
-				if (string[currentIndex] == '\\')
-					stringEscapeNextChar = true;
-				else
-				{
-					parsedString[stringIndex] = string[currentIndex];
-					stringIndex++;
-				}
-
-				currentIndex++;
-			}
-
-			parsedString[stringIndex] = '\0';
-
-			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_VALUE_STRING, parsedString, strlen(parsedString), parsedStringBegin, currentIndex));
-			parsingString = false;
+			else if (isalpha(string[currentIndex]))
+				parsingName = true;
 		}
 
 		currentIndex++;

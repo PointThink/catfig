@@ -20,7 +20,11 @@ int main(int argc, char** argv)
 
 	string[fileSize] = 0;
 
-	Catfig_Tokenizer_Tokenize(string, fileSize, &tokens, &tokenCount);
+	Catfig_Error errorCode = Catfig_Tokenizer_Tokenize(string, fileSize, &tokens, &tokenCount);
+
+	if (errorCode != CATFIG_SUCCESS)
+		return errorCode;
+
 
 	printf("tokenCount: %d\n", tokenCount);
 
