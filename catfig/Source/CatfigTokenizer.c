@@ -111,6 +111,7 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 
 			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_VALUE_STRING, parsedString, strlen(parsedString), parsedStringBegin, currentIndex));
 			parsingString = false;
+			*outTokenCount += 1;
 		}
 		else if (parsingName)
 		{
@@ -138,7 +139,18 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 			}
 
 			parsingName = false;
-			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_NAME, nameString, nameLength, nameBegin, nameBegin + nameLength));
+
+			Catfig_TokenType tokenType = CATFIG_TOKENTYPE_NAME;
+
+			if (strcmp(nameString, "true") == 0)
+				tokenType = CATFIG_TOKENTYPE_VALUE_TRUE;
+			else if (strcmp(nameString, "false") == 0)
+				tokenType = CATFIG_TOKENTYPE_VALUE_FALSE;
+			else if (strcmp(nameString, "null") == 0)
+				tokenType = CATFIG_TOKENTYPE_VALUE_NULL;
+
+			TokenArray_Append(&tokenArray, CreateToken(tokenType, nameString, nameLength, nameBegin, nameBegin + nameLength));
+			*outTokenCount += 1;
 		}
 		else if (parsingNumber)
 		{
@@ -167,6 +179,7 @@ Catfig_Error Catfig_Tokenizer_Tokenize(char* string, uint32_t stringLength, Catf
 
 			TokenArray_Append(&tokenArray, CreateToken(CATFIG_TOKENTYPE_VALUE_NUMBER, numberString, numberLength, numberBegin, numberBegin + numberLength));
 			parsingNumber = false;
+			*outTokenCount += 1;
 		}
 		else
 		{

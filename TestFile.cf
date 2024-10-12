@@ -3,6 +3,9 @@ variable =
     int_var = 1
     float_var = 0.20
     string_var = "string_var\""
+    bool_var = false
+    bool_var2 = true
+    val3 = null
     
     array = [1, 2, 3, 4]
     
